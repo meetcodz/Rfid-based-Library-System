@@ -10,7 +10,7 @@ class ScannerDeviceAdmin(admin.ModelAdmin):
 class ScanSessionAdmin(admin.ModelAdmin):
     list_display = ['id', 'shelf', 'started_at', 'status', 'total_tags_scanned', 'total_expected']
     list_filter = ['status', 'started_at']
-    raw_id_fields = ['device', 'shelf', 'operator']
+    raw_id_fields = ['device', 'shelf']
 
 @admin.register(ScanEvent)
 class ScanEventAdmin(admin.ModelAdmin):
@@ -22,4 +22,4 @@ class ScanEventAdmin(admin.ModelAdmin):
 class MissingReportAdmin(admin.ModelAdmin):
     list_display = ['book_copy', 'expected_slot', 'session', 'resolved_at']
     list_filter = ['resolved_at']
-    raw_id_fields = ['session', 'book_copy', 'expected_slot', 'resolved_by']
+    raw_id_fields = ['session', 'book_copy', 'expected_slot']
