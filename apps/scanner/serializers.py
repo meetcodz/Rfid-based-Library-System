@@ -22,7 +22,7 @@ class ScanSessionSerializer(serializers.ModelSerializer):
         model = ScanSession
         fields = [
             'id', 'device', 'device_name', 'shelf', 'shelf_code',
-            'operator', 'started_at', 'ended_at', 'status',
+            'started_at', 'ended_at', 'status',
             'total_tags_scanned', 'total_expected'
         ]
 
@@ -37,5 +37,5 @@ class MissingReportSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'session', 'book_copy', 'book_title', 'rfid_tag',
             'expected_slot', 'shelf_code', 'resolved_at',
-            'resolved_by', 'notes', 'created_at'
+            'notes', 'created_at'
         ]
