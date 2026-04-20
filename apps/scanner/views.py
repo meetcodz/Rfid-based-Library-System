@@ -25,7 +25,7 @@ class ScannerDeviceViewSet(viewsets.ModelViewSet):
 
 
 class ScanSessionViewSet(viewsets.ModelViewSet):
-    queryset = ScanSession.objects.select_related('device', 'shelf', 'operator').all()
+    queryset = ScanSession.objects.select_related('device', 'shelf').all()
     serializer_class = ScanSessionSerializer
 
     @action(detail=False, methods=['post'], url_path='start')
@@ -42,7 +42,6 @@ class ScanSessionViewSet(viewsets.ModelViewSet):
         session = ScanSession.objects.create(
             device=device,
             shelf_id=shelf_id,
-            operator=request.user if request.user.is_authenticated else None,
             status=ScanSession.Status.IN_PROGRESS
         )
         return Response(ScanSessionSerializer(session).data, status=status.HTTP_201_CREATED)
@@ -87,7 +86,6 @@ class MissingReportViewSet(viewsets.ModelViewSet):
         """Mark a missing book as found or officially lost."""
         report = self.get_object()
         report.resolved_at = timezone.now()
-        report.resolved_by = request.user
         report.notes += f"\nResolved: {request.data.get('notes', '')}"
         report.save()
         return Response(MissingReportSerializer(report).data)
