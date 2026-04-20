@@ -14,16 +14,10 @@ urlpatterns = [
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
-    # Auth
-    path('api/auth/', include('apps.members.auth_urls')),
-
     # App APIs
     path('api/catalog/', include('apps.catalog.urls')),
     path('api/inventory/', include('apps.inventory.urls')),
-    path('api/members/', include('apps.members.urls')),
-    path('api/circulation/', include('apps.circulation.urls')),
     path('api/scanner/', include('apps.scanner.urls')),
-    path('api/reports/', include('apps.reports.urls')),
 ]
 
 if settings.DEBUG:
