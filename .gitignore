@@ -1,0 +1,44 @@
+# Django
+# ------
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+.env
+
+# Virtual Environment
+# -------------------
+.venv/
+venv/
+env/
+dist/
+build/
+*.egg-info/
+
+# Node / Frontend
+# ---------------
+node_modules/
+smart-library-management (1)/node_modules/
+smart-library-management (1)/dist/
+smart-library-management (1)/.vite/
+npm-debug.log*
+
+# System / IDE
+# ------------
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.suo
+.cph/
+
+# Project Specific
+# ----------------
+test_db.py
+ACDC (1).zip
+ACDC (2).zip
