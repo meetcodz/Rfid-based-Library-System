@@ -25,7 +25,7 @@ export default function Dashboard() {
   const { data: recentLogs } = useQuery({
     queryKey: ['recentLogs'],
     queryFn: apiService.getIssueRecords, // Using issue records as activity for now
-    select: (data) => data.slice(0, 5)
+    select: (data) => (Array.isArray(data) ? data.slice(0, 5) : [])
   });
 
   if (statsLoading || alertsLoading) {
@@ -34,7 +34,7 @@ export default function Dashboard() {
 
   const stats = {
     total: analytics?.total_books || 0,
-    available: (analytics?.total_books - analytics?.active_issues) || 0,
+    available: ((analytics?.total_books || 0) - (analytics?.active_issues || 0)),
     issued: analytics?.active_issues || 0,
     missing: alerts?.length || 0,
   };
