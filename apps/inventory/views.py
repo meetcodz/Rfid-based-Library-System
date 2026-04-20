@@ -1,7 +1,9 @@
+from django.utils import timezone
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
+from apps.catalog.models import Book
 from .models import Section, Shelf, ShelfSlot, BookCopy, CopyStatus
 from .serializers import (
     SectionSerializer, ShelfSerializer, ShelfSlotSerializer,
@@ -98,15 +100,36 @@ class BookCopyViewSet(viewsets.ModelViewSet):
             return BookCopyDetailSerializer
         return BookCopySerializer
 
-    @action(detail=False, methods=['get'], url_path='by-rfid/(?P<rfid_tag>[^/.]+)')
+    @action(detail=False, methods=['get', 'post'], url_path='by-rfid/(?P<rfid_tag>[^/.]+)')
     def by_rfid(self, request, rfid_tag=None):
-        """Look up a book copy directly by RFID tag — used by scanner firmware."""
+        """Look up a book copy directly by RFID tag. If not found and it's a POST, create it."""
         try:
             copy = BookCopy.objects.select_related(
                 'book', 'assigned_slot__shelf', 'last_scanned_slot__shelf'
             ).get(rfid_tag=rfid_tag, is_active=True)
             return Response(BookCopyDetailSerializer(copy, context={'request': request}).data)
         except BookCopy.DoesNotExist:
+            if request.method == 'POST':
+                # Dynamically register the unknown tag
+                placeholder_book, _ = Book.objects.get_or_create(
+                    isbn='0000000000',
+                    defaults={'title': 'Unregistered RFID Copy', 'description': 'Automatically added via hardware scanner.'}
+                )
+                
+                # Count current placeholder copies to create a unique accession number
+                count = BookCopy.objects.filter(book=placeholder_book).count() + 1
+                new_copy = BookCopy.objects.create(
+                    book=placeholder_book,
+                    rfid_tag=rfid_tag,
+                    accession_number=f'REG-{rfid_tag[-4:]}-{count:03d}',
+                    notes=f"Automatically registered on {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                )
+                
+                serializer = BookCopyDetailSerializer(new_copy, context={'request': request})
+                return Response(
+                    {'detail': 'New RFID tag registered successfully.', 'data': serializer.data},
+                    status=status.HTTP_201_CREATED
+                )
             return Response({'detail': 'RFID tag not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=False, methods=['get'], url_path='misplaced')
