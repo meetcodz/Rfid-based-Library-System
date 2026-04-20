@@ -27,7 +27,6 @@ class ScanSession(TimeStampedModel):
 
     device = models.ForeignKey(ScannerDevice, on_delete=models.CASCADE, related_name='sessions')
     shelf = models.ForeignKey(Shelf, on_delete=models.CASCADE, related_name='scan_sessions')
-    operator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='scan_sessions')
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.IN_PROGRESS)
@@ -59,7 +58,6 @@ class MissingReport(TimeStampedModel):
     book_copy = models.ForeignKey(BookCopy, on_delete=models.CASCADE, related_name='missing_reports')
     expected_slot = models.ForeignKey(ShelfSlot, on_delete=models.CASCADE, related_name='missing_reports')
     resolved_at = models.DateTimeField(null=True, blank=True)
-    resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='resolved_reports')
     notes = models.TextField(blank=True)
 
     def __str__(self):
