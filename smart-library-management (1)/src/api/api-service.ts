@@ -4,12 +4,20 @@
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
+/**
+ * Utility to extract the results array from a paginated response.
+ */
+const unwrap = async (response: Response) => {
+  if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+  const data = await response.json();
+  return data.results !== undefined ? data.results : data;
+};
+
 export const apiService = {
   // Books & Catalog
   async getBooks() {
     const response = await fetch(`${API_BASE_URL}/catalog/books/`);
-    if (!response.ok) throw new Error('Failed to fetch books');
-    return response.json();
+    return unwrap(response);
   },
 
   async getBookDetails(id: string) {
@@ -20,26 +28,25 @@ export const apiService = {
   // Inventory & Tracking
   async getShelfGrid() {
     const response = await fetch(`${API_BASE_URL}/inventory/grid/`);
-    if (!response.ok) throw new Error('Failed to fetch shelf grid');
-    return response.json();
+    return unwrap(response);
   },
 
   async getBookCopies() {
     const response = await fetch(`${API_BASE_URL}/inventory/copies/`);
-    return response.json();
+    return unwrap(response);
   },
 
   // Dashboard & Analytics
   async getAnalytics() {
     const response = await fetch(`${API_BASE_URL}/reports/analytics/`);
     if (!response.ok) throw new Error('Failed to fetch analytics');
-    return response.json();
+    return response.json(); // Analytics is usually a single object, not paginated
   },
 
   // Circulation
   async getIssueRecords() {
     const response = await fetch(`${API_BASE_URL}/circulation/issues/`);
-    return response.json();
+    return unwrap(response);
   },
 
   async issueBook(data: { copy: string; member: string; due_date: string }) {
@@ -62,14 +69,12 @@ export const apiService = {
   async getAlerts() {
     // Mapping missing reports to alerts
     const response = await fetch(`${API_BASE_URL}/scanner/missing-reports/`);
-    if (!response.ok) throw new Error('Failed to fetch alerts');
-    return response.json();
+    return unwrap(response);
   },
 
   // Members
   async getStudents() {
     const response = await fetch(`${API_BASE_URL}/members/profiles/`);
-    if (!response.ok) throw new Error('Failed to fetch students');
-    return response.json();
+    return unwrap(response);
   },
 };
