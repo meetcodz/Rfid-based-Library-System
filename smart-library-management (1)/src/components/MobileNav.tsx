@@ -1,43 +1,33 @@
-import { NavLink, useLocation } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Search,
-  MapPin,
-  ArrowLeftRight,
-  Bell,
-  BarChart3,
-} from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { LayoutDashboard, AlertTriangle, Library } from "lucide-react";
 
 const navItems = [
-  { to: "/", icon: LayoutDashboard, label: "Home" },
-  { to: "/search", icon: Search, label: "Search" },
-  { to: "/tracking", icon: MapPin, label: "Track" },
-  { to: "/issue-return", icon: ArrowLeftRight, label: "Issue" },
-  { to: "/alerts", icon: Bell, label: "Alerts" },
-  { to: "/analytics", icon: BarChart3, label: "Stats" },
+  { to: "/", icon: LayoutDashboard, label: "Sessions" },
+  { to: "/shelves", icon: Library, label: "Shelves" },
+  { to: "/missing", icon: AlertTriangle, label: "Missing" },
 ];
 
 export function MobileNav() {
-  const location = useLocation();
-
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border px-2 py-1.5">
-      <div className="flex justify-around">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.to;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-                isActive ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </NavLink>
-          );
-        })}
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-sidebar border-t border-sidebar-border px-2 pb-safe">
+      <div className="flex items-center justify-around py-2">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) =>
+              `flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all text-xs font-medium ${
+                isActive
+                  ? "text-primary bg-primary/10"
+                  : "text-sidebar-muted hover:text-sidebar-foreground"
+              }`
+            }
+          >
+            <item.icon className="w-5 h-5" />
+            {item.label}
+          </NavLink>
+        ))}
       </div>
     </nav>
   );
