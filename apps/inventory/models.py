@@ -63,8 +63,8 @@ class Shelf(TimeStampedModel):
     @property
     def current_book_count(self):
         return self.slots.filter(
-            book_copies__status=CopyStatus.AVAILABLE,
-            book_copies__is_active=True
+            last_seen_copies__status=CopyStatus.AVAILABLE,
+            last_seen_copies__is_active=True
         ).count()
 
     class Meta(TimeStampedModel.Meta):
