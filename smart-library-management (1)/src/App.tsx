@@ -6,14 +6,19 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileNav } from "@/components/MobileNav";
 import Dashboard from "./pages/Dashboard";
-import BookSearch from "./pages/BookSearch";
-import LiveTracking from "./pages/LiveTracking";
-import IssueReturn from "./pages/IssueReturn";
-import Alerts from "./pages/Alerts";
-import Analytics from "./pages/Analytics";
+import SessionDetail from "./pages/SessionDetail";
+import MissingReports from "./pages/MissingReports";
+import Shelves from "./pages/Shelves";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchInterval: 5000, // poll every 5s for live updates
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,11 +31,9 @@ const App = () => (
             <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8 overflow-auto">
               <Routes>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/search" element={<BookSearch />} />
-                <Route path="/tracking" element={<LiveTracking />} />
-                <Route path="/issue-return" element={<IssueReturn />} />
-                <Route path="/alerts" element={<Alerts />} />
-                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/sessions/:id" element={<SessionDetail />} />
+                <Route path="/missing" element={<MissingReports />} />
+                <Route path="/shelves" element={<Shelves />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
