@@ -104,12 +104,27 @@ class BookCopyViewSet(viewsets.ModelViewSet):
     def by_rfid(self, request, rfid_tag=None):
         """Look up a book copy directly by RFID tag. If not found and it's a POST, create it."""
         try:
-            copy = BookCopy.objects.select_related(
-                'book', 'assigned_slot__shelf', 'last_scanned_slot__shelf'
-            ).get(rfid_tag=rfid_tag, is_active=True)
+            # Auto-link to active session if one exists
+            from apps.scanner.models import ScanSession, ScanEvent
+            active_session = ScanSession.objects.filter(status='in_progress').first()
+            if active_session:
+                ScanEvent.objects.create(
+                    session=active_session,
+                    rfid_tag=rfid_tag
+                )
+
             return Response(BookCopyDetailSerializer(copy, context={'request': request}).data)
         except BookCopy.DoesNotExist:
             if request.method == 'POST':
+                # Auto-link to active session if one exists
+                from apps.scanner.models import ScanSession, ScanEvent
+                active_session = ScanSession.objects.filter(status='in_progress').first()
+                if active_session:
+                    ScanEvent.objects.create(
+                        session=active_session,
+                        rfid_tag=rfid_tag
+                    )
+                
                 # Dynamically register the unknown tag
                 placeholder_book, _ = Book.objects.get_or_create(
                     isbn='0000000000',
