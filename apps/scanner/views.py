@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -35,9 +36,14 @@ class ScanSessionViewSet(viewsets.ModelViewSet):
         shelf_id = request.data.get('shelf_id')
         
         try:
-            device = ScannerDevice.objects.get(device_id=device_id, is_active=True)
-        except ScannerDevice.DoesNotExist:
-            return Response({'detail': f'Device {device_id} not registered.'}, status=status.HTTP_400_BAD_REQUEST)
+            # Try lookup by UUID (from Web Dashboard)
+            device = ScannerDevice.objects.get(id=device_id, is_active=True)
+        except (ScannerDevice.DoesNotExist, ValueError, ValidationError):
+            try:
+                # Try lookup by device_id string (from Hardware)
+                device = ScannerDevice.objects.get(device_id=device_id, is_active=True)
+            except ScannerDevice.DoesNotExist:
+                return Response({'detail': f'Device {device_id} not registered.'}, status=status.HTTP_400_BAD_REQUEST)
         
         session = ScanSession.objects.create(
             device=device,
@@ -78,7 +84,7 @@ class ScanSessionViewSet(viewsets.ModelViewSet):
 
 
 class MissingReportViewSet(viewsets.ModelViewSet):
-    queryset = MissingReport.objects.select_related('book_copy__book', 'expected_slot__shelf').all()
+    queryset = MissingReport.objects.select_related('book_copy__book', 'expected_shelf').all()
     serializer_class = MissingReportSerializer
 
     @action(detail=True, methods=['post'], url_path='resolve')
