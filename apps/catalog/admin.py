@@ -1,5 +1,12 @@
 from django.contrib import admin
 from .models import Author, Publisher, Category, Book
+from apps.inventory.models import BookCopy
+
+
+class BookCopyInline(admin.TabularInline):
+    model = BookCopy
+    extra = 1
+    fields = ['rfid_tag', 'accession_number', 'status', 'assigned_shelf']
 
 
 @admin.register(Author)
@@ -29,4 +36,5 @@ class BookAdmin(admin.ModelAdmin):
     search_fields = ['title', 'isbn', 'authors__name']
     list_filter = ['category', 'language', 'is_active']
     filter_horizontal = ['authors']
+    inlines = [BookCopyInline]
     readonly_fields = ['created_at', 'updated_at']
