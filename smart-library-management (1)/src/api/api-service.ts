@@ -3,7 +3,7 @@
  * Base: http://localhost:5000/api
  */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 const get = async <T>(url: string): Promise<T> => {
   const res = await fetch(url);
@@ -25,10 +25,10 @@ const post = async <T>(url: string, body?: object): Promise<T> => {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface ScanSession {
-  id: number;
-  device: number;
+  id: string;
+  device: string;
   device_name: string;
-  shelf: number;
+  shelf: string;
   shelf_code: string;
   started_at: string;
   ended_at: string | null;
@@ -38,12 +38,12 @@ export interface ScanSession {
 }
 
 export interface MissingReport {
-  id: number;
-  session: number;
-  book_copy: number;
+  id: string;
+  session: string;
+  book_copy: string;
   book_title: string;
   rfid_tag: string;
-  expected_slot: number;
+  expected_shelf: string;
   shelf_code: string;
   resolved_at: string | null;
   notes: string;
@@ -51,8 +51,8 @@ export interface MissingReport {
 }
 
 export interface BookCopy {
-  id: number;
-  book: number;
+  id: string;
+  book: string;
   book_title: string;
   book_isbn: string;
   rfid_tag: string;
@@ -66,9 +66,9 @@ export interface BookCopy {
 }
 
 export interface Shelf {
-  id: number;
+  id: string;
   code: string;
-  section: number;
+  section: string;
   section_name: string;
   row_number: number;
   column_number: number;
@@ -78,7 +78,7 @@ export interface Shelf {
 }
 
 export interface ScannerDevice {
-  id: number;
+  id: string;
   device_id: string;
   name: string;
 }
@@ -88,17 +88,17 @@ export interface ScannerDevice {
 export const api = {
   // Scanner
   getSessions:      ()           => get<ScanSession[]>(`${API_BASE}/scanner/sessions/`),
-  getSession:       (id: number) => get<ScanSession>(`${API_BASE}/scanner/sessions/${id}/`),
+  getSession:       (id: string) => get<ScanSession>(`${API_BASE}/scanner/sessions/${id}/`),
   getMissingReports:()           => get<MissingReport[]>(`${API_BASE}/scanner/missing-reports/`),
   getDevices:       ()           => get<ScannerDevice[]>(`${API_BASE}/scanner/devices/`),
-  startSession:     (deviceId: number, shelfId: number) => 
+  startSession:     (deviceId: string, shelfId: string) => 
     post<ScanSession>(`${API_BASE}/scanner/sessions/start/`, { device_id: deviceId, shelf_id: shelfId }),
-  endSession:       (id: number) => post(`${API_BASE}/scanner/sessions/${id}/end/`),
-  resolveMissing:   (id: number, notes: string) =>
+  endSession:       (id: string) => post(`${API_BASE}/scanner/sessions/${id}/end/`),
+  resolveMissing:   (id: string, notes: string) =>
     post(`${API_BASE}/scanner/missing-reports/${id}/resolve/`, { notes }),
 
   // Inventory
   getShelves:       ()           => get<Shelf[]>(`${API_BASE}/inventory/shelves/`),
   getCopies:        ()           => get<BookCopy[]>(`${API_BASE}/inventory/copies/`),
-  getShelfCopies:   (id: number) => get<BookCopy[]>(`${API_BASE}/inventory/shelves/${id}/copies/`),
+  getShelfCopies:   (id: string) => get<BookCopy[]>(`${API_BASE}/inventory/shelves/${id}/copies/`),
 };
