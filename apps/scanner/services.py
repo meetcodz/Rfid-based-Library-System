@@ -13,7 +13,7 @@ def reconcile_scan_session(session_id):
     2. Get all book copies expected on this shelf (status='available').
     3. Find missing books (expected but NOT scanned).
     4. Find misplaced books (scanned but expected elsewhere).
-    5. Update last_scanned_at and last_scanned_slot for found books.
+    5. Update last_scanned_at and last_scanned_shelf for found books.
     """
     try:
         session = ScanSession.objects.select_related('shelf').get(id=session_id)
@@ -29,10 +29,10 @@ def reconcile_scan_session(session_id):
 
     # Get all copies expected to be on this shelf (status='available' and assigned to this shelf)
     expected_copies = BookCopy.objects.filter(
-        assigned_slot__shelf=session.shelf,
+        assigned_shelf=session.shelf,
         status=CopyStatus.AVAILABLE,
         is_active=True
-    ).select_related('assigned_slot')
+    ).select_related('assigned_shelf')
     session.total_expected = expected_copies.count()
 
     expected_rfids = {copy.rfid_tag: copy for copy in expected_copies}
@@ -43,13 +43,10 @@ def reconcile_scan_session(session_id):
             copy = BookCopy.objects.get(rfid_tag=tag_id, is_active=True)
             # Update last seen info
             copy.last_scanned_at = timezone.now()
-            # In a real scenario, we might use signal strength to deduce the slot number
-            # For this MVP, we just mark it as 'detected on this shelf'
-            # (In a more advanced version, we'd map antenna_id/time to ShelfSlot)
+            copy.last_scanned_shelf = session.shelf
             
             # If not assigned to this shelf, it's misplaced
-            if copy.assigned_slot and copy.assigned_slot.shelf != session.shelf:
-                # We could log an alert here
+            if copy.assigned_shelf and copy.assigned_shelf != session.shelf:
                 copy.notes += f"\nDetected on shelf {session.shelf.code} during session {session.id} (Misplaced)."
             
             copy.save()
@@ -66,7 +63,7 @@ def reconcile_scan_session(session_id):
             MissingReport.objects.create(
                 session=session,
                 book_copy=copy,
-                expected_slot=copy.assigned_slot,
+                expected_shelf=copy.assigned_shelf,
                 notes=f"Missing during shelf scan session {session.id}."
             )
 
