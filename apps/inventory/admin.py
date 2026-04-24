@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Section, Shelf, ShelfSlot, BookCopy
+from .models import Section, Shelf, BookCopy
 
 
 @admin.register(Section)
@@ -11,25 +11,22 @@ class SectionAdmin(admin.ModelAdmin):
 
 @admin.register(Shelf)
 class ShelfAdmin(admin.ModelAdmin):
-    list_display = ['code', 'section', 'row_number', 'column_number', 'capacity', 'is_active']
-    search_fields = ['code', 'label']
+    list_display = ['code', 'rfid_tag', 'section', 'row_number', 'column_number', 'capacity', 'is_active']
+    search_fields = ['code', 'rfid_tag', 'label']
     list_filter = ['section', 'is_active']
-
-
-@admin.register(ShelfSlot)
-class ShelfSlotAdmin(admin.ModelAdmin):
-    list_display = ['label', 'shelf', 'slot_number']
-    list_filter = ['shelf__section']
-    search_fields = ['label', 'shelf__code']
 
 
 @admin.register(BookCopy)
 class BookCopyAdmin(admin.ModelAdmin):
     list_display = [
         'accession_number', 'book', 'rfid_tag',
-        'status', 'condition', 'assigned_slot', 'last_scanned_at'
+        'status', 'condition', 'assigned_shelf', 'last_scanned_at'
     ]
     search_fields = ['rfid_tag', 'barcode', 'accession_number', 'book__title']
     list_filter = ['status', 'condition', 'is_active']
-    readonly_fields = ['last_scanned_at', 'last_scanned_slot', 'created_at', 'updated_at']
-    raw_id_fields = ['book', 'assigned_slot', 'last_scanned_slot']
+    list_editable = ['assigned_shelf']
+    readonly_fields = ['last_scanned_at', 'last_scanned_shelf', 'created_at', 'updated_at']
+    
+    # Use autocomplete for book lookup, but a simple dropdown for shelf selection
+    autocomplete_fields = ['book']
+    raw_id_fields = ['last_scanned_shelf']
