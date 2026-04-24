@@ -4,9 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from apps.catalog.models import Book
-from .models import Section, Shelf, ShelfSlot, BookCopy, CopyStatus
+from .models import Section, Shelf, BookCopy, CopyStatus
 from .serializers import (
-    SectionSerializer, ShelfSerializer, ShelfSlotSerializer,
+    SectionSerializer, ShelfSerializer,
     BookCopySerializer, BookCopyDetailSerializer
 )
 
@@ -22,7 +22,7 @@ class ShelfGridViewSet(viewsets.ViewSet):
         for shelf in shelves:
             # Get books that were last scanned in this shelf
             books_in_shelf = BookCopy.objects.filter(
-                last_scanned_slot__shelf=shelf,
+                last_scanned_shelf=shelf,
                 is_active=True,
                 status=CopyStatus.AVAILABLE
             ).values_list('book__title', flat=True)
@@ -53,13 +53,22 @@ class ShelfViewSet(viewsets.ModelViewSet):
     filterset_fields = ['section', 'row_number']
     search_fields = ['code', 'label']
 
+    @action(detail=False, methods=['get'], url_path='by-rfid/(?P<rfid_tag>[^/.]+)')
+    def by_rfid(self, request, rfid_tag=None):
+        """Look up a shelf directly by its RFID tag."""
+        try:
+            shelf = Shelf.objects.get(rfid_tag=rfid_tag, is_active=True)
+            return Response(ShelfSerializer(shelf).data)
+        except Shelf.DoesNotExist:
+            return Response({'detail': 'Shelf tag not found.'}, status=status.HTTP_404_NOT_FOUND)
+
     @action(detail=True, methods=['get'], url_path='copies')
     def copies(self, request, pk=None):
         """Return all book copies currently assigned to this shelf."""
         shelf = self.get_object()
         copies = BookCopy.objects.filter(
-            assigned_slot__shelf=shelf, is_active=True
-        ).select_related('book', 'assigned_slot', 'last_scanned_slot')
+            assigned_shelf=shelf, is_active=True
+        ).select_related('book', 'assigned_shelf', 'last_scanned_shelf')
         serializer = BookCopySerializer(copies, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -69,30 +78,23 @@ class ShelfViewSet(viewsets.ModelViewSet):
         shelf = self.get_object()
         from apps.scanner.models import MissingReport
         reports = MissingReport.objects.filter(
-            expected_slot__shelf=shelf,
+            expected_shelf=shelf,
             resolved_at__isnull=True
-        ).select_related('book_copy__book', 'expected_slot')
+        ).select_related('book_copy__book', 'expected_shelf')
         from apps.scanner.serializers import MissingReportSerializer
         serializer = MissingReportSerializer(reports, many=True, context={'request': request})
         return Response(serializer.data)
 
 
-class ShelfSlotViewSet(viewsets.ModelViewSet):
-    queryset = ShelfSlot.objects.filter(is_active=True).select_related('shelf')
-    serializer_class = ShelfSlotSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['shelf']
-
-
 class BookCopyViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['status', 'condition', 'assigned_slot__shelf']
+    filterset_fields = ['status', 'condition', 'assigned_shelf']
     search_fields = ['rfid_tag', 'barcode', 'accession_number', 'book__title', 'book__isbn']
     ordering_fields = ['status', 'created_at', 'last_scanned_at']
 
     def get_queryset(self):
         return BookCopy.objects.filter(is_active=True).select_related(
-            'book', 'assigned_slot__shelf', 'last_scanned_slot__shelf'
+            'book', 'assigned_shelf', 'last_scanned_shelf'
         )
 
     def get_serializer_class(self):
@@ -104,6 +106,8 @@ class BookCopyViewSet(viewsets.ModelViewSet):
     def by_rfid(self, request, rfid_tag=None):
         """Look up a book copy directly by RFID tag. If not found and it's a POST, create it."""
         try:
+            copy = BookCopy.objects.get(rfid_tag=rfid_tag, is_active=True)
+            
             # Auto-link to active session if one exists
             from apps.scanner.models import ScanSession, ScanEvent
             active_session = ScanSession.objects.filter(status='in_progress').first()
