@@ -48,6 +48,10 @@ class Shelf(TimeStampedModel):
     Each shelf has a scanner assigned to it.
     """
     code = models.CharField(max_length=20, unique=True)   # e.g. "SH-A01"
+    rfid_tag = models.CharField(
+        max_length=100, unique=True, null=True, blank=True,
+        help_text='RFID tag ID attached to the physical shelf itself'
+    )
     section = models.ForeignKey(
         Section, on_delete=models.CASCADE, related_name='shelves'
     )
@@ -62,9 +66,9 @@ class Shelf(TimeStampedModel):
 
     @property
     def current_book_count(self):
-        return self.slots.filter(
-            last_seen_copies__status=CopyStatus.AVAILABLE,
-            last_seen_copies__is_active=True
+        return self.last_seen_copies.filter(
+            status=CopyStatus.AVAILABLE,
+            is_active=True
         ).count()
 
     class Meta(TimeStampedModel.Meta):
@@ -73,30 +77,10 @@ class Shelf(TimeStampedModel):
         indexes = [models.Index(fields=['code'])]
 
 
-class ShelfSlot(TimeStampedModel):
-    """
-    An individual slot/position on a shelf.
-    Each BookCopy's expected position in the library.
-    """
-    shelf = models.ForeignKey(
-        Shelf, on_delete=models.CASCADE, related_name='slots'
-    )
-    slot_number = models.PositiveIntegerField()
-    label = models.CharField(max_length=20, blank=True)    # e.g. "A01-3"
-
-    def __str__(self):
-        return f'Slot {self.label or self.slot_number} on {self.shelf.code}'
-
-    class Meta(TimeStampedModel.Meta):
-        verbose_name = 'Shelf Slot'
-        unique_together = [('shelf', 'slot_number')]
-        indexes = [models.Index(fields=['shelf', 'slot_number'])]
-
-
 class BookCopy(TimeStampedModel):
     """
     A physical copy of a book, uniquely identified by its RFID tag.
-    This is the central entity that the scanner interacts with.
+    The scanner identifies which shelf this copy is currently on.
     """
     book = models.ForeignKey(
         Book, on_delete=models.CASCADE, related_name='copies'
@@ -117,19 +101,19 @@ class BookCopy(TimeStampedModel):
     status = models.CharField(
         max_length=20, choices=CopyStatus.choices, default=CopyStatus.AVAILABLE
     )
-    # Where this copy should be (its home slot)
-    assigned_slot = models.ForeignKey(
-        ShelfSlot, null=True, blank=True,
+    # Where this copy should be (its home shelf)
+    assigned_shelf = models.ForeignKey(
+        Shelf, null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name='assigned_copies',
-        help_text='Expected home position of this copy on a shelf'
+        help_text='Expected home shelf of this copy'
     )
     # Where this copy was actually last detected
-    last_scanned_slot = models.ForeignKey(
-        ShelfSlot, null=True, blank=True,
+    last_scanned_shelf = models.ForeignKey(
+        Shelf, null=True, blank=True,
         on_delete=models.SET_NULL,
         related_name='last_seen_copies',
-        help_text='Last confirmed physical location from scanner'
+        help_text='Last confirmed shelf location from scanner'
     )
     last_scanned_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
@@ -143,12 +127,12 @@ class BookCopy(TimeStampedModel):
 
     @property
     def is_misplaced(self):
-        """True if the copy is available but found in a different slot."""
+        """True if the copy is available but found on a different shelf."""
         return (
             self.status == CopyStatus.AVAILABLE
-            and self.assigned_slot is not None
-            and self.last_scanned_slot is not None
-            and self.assigned_slot != self.last_scanned_slot
+            and self.assigned_shelf is not None
+            and self.last_scanned_shelf is not None
+            and self.assigned_shelf != self.last_scanned_shelf
         )
 
     class Meta(TimeStampedModel.Meta):
@@ -157,6 +141,6 @@ class BookCopy(TimeStampedModel):
         indexes = [
             models.Index(fields=['rfid_tag']),
             models.Index(fields=['status']),
-            models.Index(fields=['assigned_slot']),
+            models.Index(fields=['assigned_shelf']),
             models.Index(fields=['barcode']),
         ]
