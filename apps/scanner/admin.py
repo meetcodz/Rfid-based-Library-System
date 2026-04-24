@@ -20,6 +20,6 @@ class ScanEventAdmin(admin.ModelAdmin):
 
 @admin.register(MissingReport)
 class MissingReportAdmin(admin.ModelAdmin):
-    list_display = ['book_copy', 'expected_slot', 'session', 'resolved_at']
+    list_display = ['book_copy', 'expected_shelf', 'session', 'resolved_at']
     list_filter = ['resolved_at']
-    raw_id_fields = ['session', 'book_copy', 'expected_slot']
+    raw_id_fields = ['session', 'book_copy', 'expected_shelf']
