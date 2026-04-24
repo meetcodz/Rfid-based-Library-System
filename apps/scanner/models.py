@@ -4,7 +4,7 @@ Scanner App — RFID hardware management, scan sessions, and missing book report
 from django.db import models
 from django.contrib.auth.models import User
 from core.models import TimeStampedModel
-from apps.inventory.models import Shelf, BookCopy, ShelfSlot
+from apps.inventory.models import Shelf, BookCopy
 
 
 class ScannerDevice(TimeStampedModel):
@@ -56,7 +56,7 @@ class MissingReport(TimeStampedModel):
     """Automatically generated when a book expected on a shelf is not found."""
     session = models.ForeignKey(ScanSession, on_delete=models.CASCADE, related_name='missing_reports')
     book_copy = models.ForeignKey(BookCopy, on_delete=models.CASCADE, related_name='missing_reports')
-    expected_slot = models.ForeignKey(ShelfSlot, on_delete=models.CASCADE, related_name='missing_reports')
+    expected_shelf = models.ForeignKey(Shelf, on_delete=models.CASCADE, null=True, blank=True, related_name='missing_reports')
     resolved_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
 
