@@ -29,13 +29,13 @@ class ScanSessionSerializer(serializers.ModelSerializer):
 
 class MissingReportSerializer(serializers.ModelSerializer):
     book_title = serializers.CharField(source='book_copy.book.title', read_only=True)
-    shelf_code = serializers.CharField(source='expected_slot.shelf.code', read_only=True)
+    shelf_code = serializers.CharField(source='expected_shelf.code', read_only=True)
     rfid_tag = serializers.CharField(source='book_copy.rfid_tag', read_only=True)
 
     class Meta:
         model = MissingReport
         fields = [
             'id', 'session', 'book_copy', 'book_title', 'rfid_tag',
-            'expected_slot', 'shelf_code', 'resolved_at',
+            'expected_shelf', 'shelf_code', 'resolved_at',
             'notes', 'created_at'
         ]
