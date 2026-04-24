@@ -43,7 +43,7 @@ export function StartScanDialog() {
 
   const startMutation = useMutation({
     mutationFn: () => 
-      api.startSession(Number(selectedDevice), Number(selectedShelf)),
+      api.startSession(selectedDevice, selectedShelf),
     onSuccess: (session) => {
       toast.success("Scan session started!");
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
